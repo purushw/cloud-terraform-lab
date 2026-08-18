@@ -1,0 +1,19 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+
+# Variable files containing secrets
+*.tfvars
+!*.tfvars.example
+
+# Terraform CLI config
+.terraformrc
+terraform.rc
+
+# OS/editor
+.DS_Store
+.vscode/

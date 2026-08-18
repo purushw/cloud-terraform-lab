@@ -1,0 +1,8 @@
+project_name        = "griffith-sre-demo"
+location            = "australiaeast"
+resource_group_name = "rg-griffith-sre-demo"
+# allowed_ip_cidr     = "YOUR.PUBLIC.IP.ADDR/32" # or leave null to skip rule
+sql_admin_login     = "sqladminpurush"
+# set the password via environment for safety:
+# export TF_VAR_sql_admin_password='StrongP@ssw0rd!'
+# export TF_VAR_allowed_ip_cidr="$(curl -s ifconfig.me)/32"
