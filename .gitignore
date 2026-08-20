@@ -17,3 +17,5 @@ terraform.rc
 # OS/editor
 .DS_Store
 .vscode/
+
+AGENTS.md
