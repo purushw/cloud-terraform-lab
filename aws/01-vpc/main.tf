@@ -151,3 +151,11 @@ resource "aws_instance" "web" {
 EOF
 
 }
+
+resource "aws_eip" "nat" {
+  domain = "vpc"
+
+  tags = {
+    Name = "cloud-terraform-lab-nat-eip"
+  }
+}
