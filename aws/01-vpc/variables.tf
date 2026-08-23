@@ -29,3 +29,24 @@ variable "public_subnets" {
     }
   }
 }
+
+variable "private_subnets" {
+  description = "Private subnet configuration"
+
+  type = map(object({
+    cidr_block        = string
+    availability_zone = string
+  }))
+
+  default = {
+    private_1 = {
+      cidr_block        = "10.0.11.0/24"
+      availability_zone = "eu-west-2a"
+    }
+
+    private_2 = {
+      cidr_block        = "10.0.12.0/24"
+      availability_zone = "eu-west-2b"
+    }
+  }
+}

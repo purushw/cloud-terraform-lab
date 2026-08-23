@@ -7,7 +7,7 @@ terraform {
     region       = "eu-west-2"
     profile      = "purush-lab"
     use_lockfile = true
-  }  
+  }
 
   required_providers {
     aws = {

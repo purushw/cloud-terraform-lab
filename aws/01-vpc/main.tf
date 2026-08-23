@@ -28,6 +28,33 @@ moved {
   to   = aws_subnet.public["public_2"]
 }
 
+resource "aws_subnet" "private" {
+  for_each = var.private_subnets
+
+  vpc_id            = aws_vpc.lab.id
+  cidr_block        = each.value.cidr_block
+  availability_zone = each.value.availability_zone
+
+  tags = {
+    Name = "cloud-terraform-lab-${each.key}"
+  }
+}
+
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.lab.id
+
+  tags = {
+    Name = "cloud-terraform-lab-private-rt"
+  }
+}
+
+resource "aws_route_table_association" "private" {
+  for_each = aws_subnet.private
+
+  subnet_id      = each.value.id
+  route_table_id = aws_route_table.private.id
+}
+
 resource "aws_internet_gateway" "lab" {
   vpc_id = aws_vpc.lab.id
 
