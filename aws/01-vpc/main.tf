@@ -1,29 +1,31 @@
 resource "aws_vpc" "lab" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc_cidr
 
   tags = {
     Name = "cloud-terraform-lab-vpc"
   }
 }
 
-resource "aws_subnet" "public_1" {
+resource "aws_subnet" "public" {
+  for_each = var.public_subnets
+
   vpc_id            = aws_vpc.lab.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "eu-west-2a"
+  cidr_block        = each.value.cidr_block
+  availability_zone = each.value.availability_zone
 
   tags = {
-    Name = "cloud-terraform-lab-public-1"
+    Name = "cloud-terraform-lab-${each.key}"
   }
 }
 
-resource "aws_subnet" "public_2" {
-  vpc_id            = aws_vpc.lab.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "eu-west-2b"
+moved {
+  from = aws_subnet.public_1
+  to   = aws_subnet.public["public_1"]
+}
 
-  tags = {
-    Name = "cloud-terraform-lab-public-2"
-  }
+moved {
+  from = aws_subnet.public_2
+  to   = aws_subnet.public["public_2"]
 }
 
 resource "aws_internet_gateway" "lab" {
@@ -47,15 +49,24 @@ resource "aws_route_table" "public" {
   }
 }
 
-resource "aws_route_table_association" "public_1" {
-  subnet_id      = aws_subnet.public_1.id
+resource "aws_route_table_association" "public" {
+  for_each = aws_subnet.public
+
+  subnet_id      = each.value.id
   route_table_id = aws_route_table.public.id
 }
 
-resource "aws_route_table_association" "public_2" {
-  subnet_id      = aws_subnet.public_2.id
-  route_table_id = aws_route_table.public.id
+moved {
+  from = aws_route_table_association.public_1
+  to   = aws_route_table_association.public["public_1"]
 }
+
+moved {
+  from = aws_route_table_association.public_2
+  to   = aws_route_table_association.public["public_2"]
+}
+
+
 
 resource "aws_security_group" "web" {
   name        = "cloud-terraform-lab-web-sg"
@@ -96,7 +107,7 @@ data "aws_ami" "amazon_linux" {
 resource "aws_instance" "web" {
   ami                         = data.aws_ami.amazon_linux.id
   instance_type               = "t3.micro"
-  subnet_id                   = aws_subnet.public_1.id
+  subnet_id                   = aws_subnet.public["public_1"].id
   vpc_security_group_ids      = [aws_security_group.web.id]
   associate_public_ip_address = true
 

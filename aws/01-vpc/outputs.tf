@@ -8,7 +8,12 @@ output "vpc_cidr" {
   value       = aws_vpc.lab.cidr_block
 }
 
-output "public_IP" {
-  description = "Public IP for EC2 instance"
+output "web_public_ip" {
+  description = "Public IPv4 address of the web instance"
   value       = aws_instance.web.public_ip
+}
+
+output "web_url" {
+  description = "HTTP URL for the web instance"
+  value       = "http://${aws_instance.web.public_ip}"
 }
