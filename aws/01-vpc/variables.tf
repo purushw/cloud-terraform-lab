@@ -1,15 +1,18 @@
+# Keep the lab's target region configurable from one input.
 variable "aws_region" {
   description = "AWS region for the lab"
   type        = string
   default     = "eu-west-2"
 }
 
+# Set the address space from which the lab subnets are allocated.
 variable "vpc_cidr" {
   description = "CIDR block for the lab VPC"
   type        = string
   default     = "10.0.0.0/16"
 }
 
+# Define the public subnet CIDRs and availability zones together.
 variable "public_subnets" {
   description = "Public subnet configuration"
   type = map(object({
@@ -30,6 +33,7 @@ variable "public_subnets" {
   }
 }
 
+# Define the private subnet CIDRs and availability zones together.
 variable "private_subnets" {
   description = "Private subnet configuration"
 

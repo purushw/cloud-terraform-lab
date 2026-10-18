@@ -1,3 +1,4 @@
+# The VPC provides the shared address space for this lab's network resources.
 resource "aws_vpc" "lab" {
   cidr_block = var.vpc_cidr
 
@@ -6,6 +7,7 @@ resource "aws_vpc" "lab" {
   }
 }
 
+# Public subnets place internet-facing resources in separate availability zones.
 resource "aws_subnet" "public" {
   for_each = var.public_subnets
 
@@ -18,16 +20,19 @@ resource "aws_subnet" "public" {
   }
 }
 
+# Preserve the first public subnet's state when moving to for_each.
 moved {
   from = aws_subnet.public_1
   to   = aws_subnet.public["public_1"]
 }
 
+# Preserve the second public subnet's state when moving to for_each.
 moved {
   from = aws_subnet.public_2
   to   = aws_subnet.public["public_2"]
 }
 
+# Private subnets provide separate address ranges without a direct internet route.
 resource "aws_subnet" "private" {
   for_each = var.private_subnets
 
@@ -40,14 +45,21 @@ resource "aws_subnet" "private" {
   }
 }
 
+# Send private subnet outbound traffic through the NAT gateway.
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.lab.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.lab.id
+  }
 
   tags = {
     Name = "cloud-terraform-lab-private-rt"
   }
 }
 
+# Apply the private route table to every private subnet.
 resource "aws_route_table_association" "private" {
   for_each = aws_subnet.private
 
@@ -55,6 +67,7 @@ resource "aws_route_table_association" "private" {
   route_table_id = aws_route_table.private.id
 }
 
+# Connect the VPC's public route table to the internet.
 resource "aws_internet_gateway" "lab" {
   vpc_id = aws_vpc.lab.id
 
@@ -63,6 +76,7 @@ resource "aws_internet_gateway" "lab" {
   }
 }
 
+# Give public subnets a default route through the internet gateway.
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.lab.id
 
@@ -76,6 +90,7 @@ resource "aws_route_table" "public" {
   }
 }
 
+# Apply the public route table to every public subnet.
 resource "aws_route_table_association" "public" {
   for_each = aws_subnet.public
 
@@ -83,11 +98,13 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+# Preserve the first public route association's state during refactoring.
 moved {
   from = aws_route_table_association.public_1
   to   = aws_route_table_association.public["public_1"]
 }
 
+# Preserve the second public route association's state during refactoring.
 moved {
   from = aws_route_table_association.public_2
   to   = aws_route_table_association.public["public_2"]
@@ -95,6 +112,7 @@ moved {
 
 
 
+# Allow HTTP access to the web instance and its outbound traffic.
 resource "aws_security_group" "web" {
   name        = "cloud-terraform-lab-web-sg"
   description = "Allow HTTP traffic to lab EC2 instance"
@@ -121,6 +139,7 @@ resource "aws_security_group" "web" {
   }
 }
 
+# Select the latest matching Amazon Linux 2023 image for the web instance.
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -131,6 +150,7 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
+# Run a small public web server to exercise the lab network path.
 resource "aws_instance" "web" {
   ami                         = data.aws_ami.amazon_linux.id
   instance_type               = "t3.micro"
@@ -152,10 +172,21 @@ EOF
 
 }
 
+# Give the NAT gateway a stable public address for outbound traffic.
 resource "aws_eip" "nat" {
   domain = "vpc"
 
   tags = {
     Name = "cloud-terraform-lab-nat-eip"
+  }
+}
+
+# Let private subnets reach the internet through the first public subnet.
+resource "aws_nat_gateway" "lab" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public["public_1"].id
+
+  tags = {
+    Name = "cloud-terraform-lab-nat"
   }
 }
